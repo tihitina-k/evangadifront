@@ -1,19 +1,15 @@
-// src/utility/axios.js
-import axios from "axios";
-// console.log("🌍 Axios Base URL:", import.meta.env.VITE_API_URL);
-console.log(import.meta.env.VITE_API_URL);
+// src/hooks/useRegister.js (or wherever you call the API)
+import { axiosInstance } from "../utility/axios";
 
-export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // dynamically switches between dev/prod
-  headers: { "Content-Type": "application/json" },
-});
+const registerUser = async (payload) => {
+  try {
+    const response = await axiosInstance.post("/api/v1/user/register", payload);
+    console.log("Register successful:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Register error:", error);
+    throw error;
+  }
+};
 
-// Automatically attach JWT token if available
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("Evangadi_Forum");
-    if (config && token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+export default registerUser;
