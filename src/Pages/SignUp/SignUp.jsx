@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import classes from "./signUp.module.css";
 import { Link } from "react-router-dom";
@@ -57,13 +55,13 @@ function Signup({ onSwitch }) {
     }
 
     try {
-      // Log payload for debugging
       console.log(
         "Sending register payload:",
         JSON.stringify(formData, null, 2)
       );
 
-    
+      // ✅ POST request to backend
+      const response = await axiosInstance.post("/user/register", formData);
 
       console.log("Backend response:", response.data);
 
@@ -76,7 +74,7 @@ function Signup({ onSwitch }) {
           confirmButtonText: "OK",
         });
 
-        // Auto-login after registration
+        // ✅ Auto-login after registration
         try {
           const loginResponse = await axiosInstance.post("/user/login", {
             usernameOrEmail: formData.email,
