@@ -1,3 +1,5 @@
+
+
 import { useState } from "react";
 import classes from "./signUp.module.css";
 import { Link } from "react-router-dom";
@@ -61,8 +63,7 @@ function Signup({ onSwitch }) {
         JSON.stringify(formData, null, 2)
       );
 
-      // POST request to backend
-      const response = await axiosInstance.post("/user/register", formData);
+    
 
       console.log("Backend response:", response.data);
 
