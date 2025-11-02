@@ -1,9 +1,10 @@
 import { useState } from "react";
-import {axiosInstance} from "../../utility/axios.js";
+import { axiosInstance } from "../../utility/axios.js";
 import classes from "./login.module.css";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 function Login({ onSwitch }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -14,13 +15,9 @@ function Login({ onSwitch }) {
     password: "",
   });
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTogglePassword = () => {
@@ -31,105 +28,115 @@ function Login({ onSwitch }) {
     e.preventDefault();
 
     try {
-      const response = await axiosInstance.post(
-        "/user/Login",
-        {
-          usernameOrEmail: formData.usernameOrEmail,
-          password: formData.password,
-        }
-      );
-      // console.log(response.data)
-      localStorage.setItem("Evangadi_Forum", response.data.token); // Store the token in local storage
-      window.location.href = "/"; // This will navigate to the / page and refresh the application
+      console.log("Sending login payload:", JSON.stringify(formData, null, 2));
+
+      // Ensure endpoint uses lowercase '/login' to match backend
+      const response = await axiosInstance.post("/user/login", formData);
+
+      console.log("Backend response:", response.data);
+
       if (response.status === 200) {
-        setSuccess("Login successful! Redirecting..."); 
+        localStorage.setItem("Evangadi_Forum", response.data.token);
+        setError(null);
+        setSuccess("Login successful! Redirecting...");
+
         await Swal.fire({
           title: "Success!",
-          text: "User Loggedin successfully!",
+          text: "User logged in successfully!",
           icon: "success",
-          confirmButtonText: "OK"
-        })
-        setError(null);
+          confirmButtonText: "OK",
+        });
+
+        window.location.href = "/"; // redirect to homepage
       } else {
         setError(response.data.msg || "Login failed.");
+        setSuccess(null);
         await Swal.fire({
           title: "Error",
-          text: response.data.msg || "Error submitting the form. Please try again",
+          text:
+            response.data.msg || "Error submitting the form. Please try again",
           icon: "error",
-          confirmButtonText: "OK"
+          confirmButtonText: "OK",
         });
-        setSuccess(null);
       }
     } catch (err) {
+      console.error("Login error:", err.response?.data || err.message);
       setError(
-        err.response?.data?.msg || "Error logging in. Please try again."+err
+        err.response?.data?.msg || "Error logging in. Please try again."
       );
+      setSuccess(null);
       await Swal.fire({
         title: "Error",
-        text: err.response?.data?.msg || "Error submitting the form. Please try again",
+        text:
+          err.response?.data?.msg ||
+          "Error submitting the form. Please try again",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
-      setSuccess(null);
     }
   };
 
   return (
     <div className={classes.formcontainer}>
       <div className={classes.innerContainer}>
-     <div className={classes.heading}>
-     <h2 className={classes.title}>Login to your account</h2>
-      <p className={classes.signuptext}>
-        Don't have an account?{" "}
-        <a
-          onClick={onSwitch}
-          style={{ cursor: "pointer", color: "var(--primary-color)" }}
-        >
-          create a new account
-        </a>
-      </p>
-      {error && (
-        <p className={classes.error} style={{ marginBottom: "10px" }}>
-          {error}
-        </p>
-      )}{" "}
-      {/* Display error message */}
-      {success && <p className={classes.success}>{success}</p>}
-     </div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="usernameOrEmail"
-          placeholder="User name or Email"
-          value={formData.usernameOrEmail}
-          onChange={handleChange}
-          required
-        />
-        <div className={classes.passwordinput}>
+        <div className={classes.heading}>
+          <h2 className={classes.title}>Login to your account</h2>
+          <p className={classes.signuptext}>
+            Don't have an account?{" "}
+            <a
+              onClick={onSwitch}
+              style={{ cursor: "pointer", color: "var(--primary-color)" }}
+            >
+              create a new account
+            </a>
+          </p>
+          {error && (
+            <p className={classes.error} style={{ marginBottom: "10px" }}>
+              {error}
+            </p>
+          )}
+          {success && <p className={classes.success}>{success}</p>}
+        </div>
+
+        <form onSubmit={handleSubmit}>
           <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            value={formData.password}
+            type="text"
+            name="usernameOrEmail"
+            placeholder="User name or Email"
+            value={formData.usernameOrEmail}
             onChange={handleChange}
             required
           />
-          <button
-  type="button"
-  onClick={handleTogglePassword}
-  style={{ background: "transparent", border: "none", cursor: "pointer" }}
->
-  {showPassword ? <FaEyeSlash /> : <FaEye />}
-</button>
-      
-        </div>
-        <p className={classes.forgotpasswordtext}>
-          <Link to="/forgetPass">Forgot password?</Link>
-        </p>
-        <button type="submit" className={classes.submitbtn}>
-          Login
-        </button>
-      </form>
+          <div className={classes.passwordinput}>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              onClick={handleTogglePassword}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          <p className={classes.forgotpasswordtext}>
+            <Link to="/forgetPass">Forgot password?</Link>
+          </p>
+
+          <button type="submit" className={classes.submitbtn}>
+            Login
+          </button>
+        </form>
       </div>
     </div>
   );

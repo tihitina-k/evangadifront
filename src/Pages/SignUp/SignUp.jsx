@@ -11,7 +11,7 @@ function Signup({ onSwitch }) {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
-    firstname: "", // match backend DB
+    firstname: "",
     lastname: "",
     email: "",
     password: "",
@@ -19,10 +19,7 @@ function Signup({ onSwitch }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTogglePassword = () => {
@@ -58,17 +55,14 @@ function Signup({ onSwitch }) {
     }
 
     try {
-      // ✅ Log payload before sending
-      console.log("Sending register payload:", formData);
+      // Log payload for debugging
+      console.log(
+        "Sending register payload:",
+        JSON.stringify(formData, null, 2)
+      );
 
       // POST request to backend
-      const response = await axiosInstance.post("/user/register", {
-        username: formData.username,
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        password: formData.password,
-      });
+      const response = await axiosInstance.post("/user/register", formData);
 
       console.log("Backend response:", response.data);
 
@@ -81,7 +75,7 @@ function Signup({ onSwitch }) {
           confirmButtonText: "OK",
         });
 
-        // auto-login after registration
+        // Auto-login after registration
         try {
           const loginResponse = await axiosInstance.post("/user/login", {
             usernameOrEmail: formData.email,
