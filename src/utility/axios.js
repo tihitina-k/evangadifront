@@ -1,7 +1,8 @@
-// src/hooks/useRegister.js (or wherever you call the API)
 import { axiosInstance } from "../utility/axios";
 
-const registerUser = async (payload) => {
+export const registerUser = async (payload) => {
+  console.log("Sending register payload:", JSON.stringify(payload, null, 2));
+
   try {
     const response = await axiosInstance.post("/api/v1/user/register", payload);
     console.log("Register successful:", response.data);
@@ -11,5 +12,3 @@ const registerUser = async (payload) => {
     throw error;
   }
 };
-
-export default registerUser;
