@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import classes from "./signUp.module.css";
 import { Link } from "react-router-dom";
 import { axiosInstance } from "../../utility/axios";
@@ -7,13 +6,13 @@ import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function Signup({ onSwitch }) {
-  const [error, setError] = useState(null); // for error message
-  const [success, setSuccess] = useState(null); // for success message
-  const [showPassword, setShowPassword] = useState(false); // State for showing/hiding password
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
-    firstName: "",
-    lastName: "",
+    firstname: "", // match backend DB
+    lastname: "",
     email: "",
     password: "",
   });
@@ -27,20 +26,14 @@ function Signup({ onSwitch }) {
   };
 
   const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev); // Toggle the visibility state
+    setShowPassword((prev) => !prev);
   };
 
-  // validate the form data for names
-  function validateUserData(fname, lname, username) {
-    // Check if first and last names contain only letters and are at least two characters long
-    const isValidFname = /^[A-Za-z]{2,}$/.test(fname.trim());
-    const isValidLname = /^[A-Za-z]{2,}$/.test(lname.trim());
-
-    // Check if username is more than two characters and holds only letters and numbers
+  function validateUserData(firstname, lastname, username) {
+    const isValidFname = /^[A-Za-z]{2,}$/.test(firstname.trim());
+    const isValidLname = /^[A-Za-z]{2,}$/.test(lastname.trim());
     const isValidUserName = /^[A-Za-z0-9]+$/.test(username.trim());
     const isValidUsernameLength = username.trim().length > 1;
-
-    // Return true only if all conditions are met, after that we will send the request to our API
     return (
       isValidFname && isValidLname && isValidUserName && isValidUsernameLength
     );
@@ -49,37 +42,38 @@ function Signup({ onSwitch }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Send a POST request to the server to register the user
     if (
       !validateUserData(
-        formData.firstName,
-        formData.lastName,
+        formData.firstname,
+        formData.lastname,
         formData.username
       )
     ) {
       return await Swal.fire({
         title: "Error",
-        text: "Please enter a valid first, last and username.  Names should contain only letters and include at least two characters",
+        text: "Please enter a valid first, last and username. Names should contain only letters and include at least two characters",
         icon: "error",
         confirmButtonText: "OK",
       });
     }
 
     try {
+      // ✅ Log payload before sending
+      console.log("Sending register payload:", formData);
+
+      // POST request to backend
       const response = await axiosInstance.post("/user/register", {
-        // Sending user registration data
         username: formData.username,
-        firstname: formData.firstName,
-        lastname: formData.lastName,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
         email: formData.email,
         password: formData.password,
       });
-      setSuccess("success");
+
+      console.log("Backend response:", response.data);
 
       if (response.status === 201) {
-        setError(null); // Clear any previous errors
-
-        // Show a success alert for registration
+        setError(null);
         await Swal.fire({
           title: "Success!",
           text: "User registered successfully! Logging in...",
@@ -87,53 +81,50 @@ function Signup({ onSwitch }) {
           confirmButtonText: "OK",
         });
 
-        // Immediately log the user in after we do the registration
+        // auto-login after registration
         try {
           const loginResponse = await axiosInstance.post("/user/login", {
-            usernameOrEmail: formData.email, // we will make the user login with the registered email
-            password: formData.password, // The same password used for registration
+            usernameOrEmail: formData.email,
+            password: formData.password,
           });
 
-          // Check the response status after awaiting the promise
           if (loginResponse.status === 200) {
-            // Store the JWT token (use localStorage, sessionStorage, or cookies as appropriate)
-            localStorage.setItem("Evangadi_Forum", loginResponse.data.token); // Store the token in local storage
-
-            // Redirect to home page
+            localStorage.setItem("Evangadi_Forum", loginResponse.data.token);
             window.location.href = "/";
           } else {
             setError(
               loginResponse.data.msg || "Login failed. Please try again."
             );
           }
-        } catch (error) {
-          console.error("Login error:", error);
+        } catch (loginError) {
+          console.error("Login error:", loginError);
           setError("An error occurred during login. Please try again.");
         }
       } else {
-        setError(response.data.Msg);
+        setError(response.data.msg);
         await Swal.fire({
           title: "Error",
-          text: error || "Error submitting the form. Please try again.",
+          text:
+            response.data.msg || "Error submitting the form. Please try again.",
           icon: "error",
           confirmButtonText: "OK",
         });
-        setSuccess(null); // clear any previous success message
+        setSuccess(null);
       }
     } catch (err) {
+      console.error("Register error:", err.response?.data || err.message);
       setError(
-        err.response?.data?.Msg ||
-          "Error submitting the form. Please try again." + err
+        err.response?.data?.msg ||
+          "Error submitting the form. Please try again."
       );
       await Swal.fire({
         title: "Error",
         text:
-          err.response?.data?.Msg ||
+          err.response?.data?.msg ||
           "Error submitting the form. Please try again.",
         icon: "error",
         confirmButtonText: "OK",
       });
-      setSuccess(null); // clear any previous success message
     }
   };
 
@@ -149,8 +140,8 @@ function Signup({ onSwitch }) {
           Sign in
         </a>
       </p>
-      {error && <p className={classes.error}>{error}</p>}{" "}
-      {success && <p className={classes.success}>{success}</p>}{" "}
+      {error && <p className={classes.error}>{error}</p>}
+      {success && <p className={classes.success}>{success}</p>}
       <form method="POST" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -163,17 +154,17 @@ function Signup({ onSwitch }) {
         <div className={classes.nameinputs}>
           <input
             type="text"
-            name="firstName"
+            name="firstname"
             placeholder="First name"
-            value={formData.firstName}
+            value={formData.firstname}
             onChange={handleChange}
             required
           />
           <input
             type="text"
-            name="lastName"
+            name="lastname"
             placeholder="Last name"
-            value={formData.lastName}
+            value={formData.lastname}
             onChange={handleChange}
             required
           />
@@ -188,7 +179,7 @@ function Signup({ onSwitch }) {
         />
         <div className={classes.passwordinput}>
           <input
-            type={showPassword ? "text" : "password"} // Toggle between text and password
+            type={showPassword ? "text" : "password"}
             name="password"
             placeholder="Password"
             value={formData.password}
