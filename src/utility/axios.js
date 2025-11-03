@@ -1,18 +1,34 @@
-// src/services/registerUser.js
-import { axiosInstance } from "../utility/axios";
+// src/utility/axios.js
+import axios from "axios";
 
-// Vite-safe dev flag
-const isDev = import.meta.env?.MODE !== "production";
+// Always safe to access import.meta.env at the top-level in Vite
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 
-export const registerUser = async (payload) => {
-  if (isDev) console.log("Sending register payload:", payload);
+// Create axios instance
+export const axiosInstance = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+});
 
-  try {
-    const response = await axiosInstance.post("/user/register", payload);
-    if (isDev) console.log("Register successful:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Register error:", error.response?.data || error.message);
-    throw error;
+// DEV flag
+const isDev = import.meta.env.MODE !== "production";
+
+// Optional: request interceptor for logging in dev
+axiosInstance.interceptors.request.use((config) => {
+  if (isDev) console.log("Axios Request:", config);
+  return config;
+});
+
+// Optional: response interceptor for logging in dev
+axiosInstance.interceptors.response.use(
+  (response) => {
+    if (isDev) console.log("Axios Response:", response);
+    return response;
+  },
+  (error) => {
+    if (isDev)
+      console.error("Axios Error:", error.response?.data || error.message);
+    return Promise.reject(error);
   }
-};
+);
